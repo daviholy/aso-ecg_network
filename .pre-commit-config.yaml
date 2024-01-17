@@ -1,0 +1,22 @@
+fail_fast: true
+repos:
+- repo: local
+  hooks:
+    - id: black
+      name: black
+      require_serial: true
+      entry: bash -c 'black "${@}"; git add -u'
+      language: system
+      types: [file, python]
+    - id: isort
+      name: isort
+      require_serial: true
+      entry: bash -c 'isort "${@}"; git add -u'
+      language: system
+      types: [file, python]
+    - id: ruff
+      name: ruff
+      require_serial: true
+      entry: ruff
+      language: system
+      types: [file, python]

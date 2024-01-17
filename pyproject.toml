@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "Aso"
+version = "0.1.0"
+description = ""
+authors = ["Milan Gittler <gittlermilan@seznam.cz>", "Petr Fridrich <petr.fridrich.1998@gmail.com>", "František Čmuchař <fanda.cmuchar@gmail.com>", "David Holý <david.holy225@gmail.com"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+lightning = "*"
+plotly = "*"
+pillow = "*"
+pandas = "*"
+tensorboard = "*"
+torch = {"version"= "*", source="torch"}
+torchaudio = {"version"= "*", source="torch"}
+torchvision = {"version"= "*", source="torch"}
+pydicom = "*"
+wfdb = "*"
+scikit-learn = "*"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "*"
+black = "*"
+isort = "*"
+pre-commit= " *"
+
+[[tool.poetry.source]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu121"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 120

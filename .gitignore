@@ -159,6 +159,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# custom
-# custom project specific files
-data
+# Custom project specific files
+.vscode/
+data/

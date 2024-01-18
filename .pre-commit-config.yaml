@@ -17,6 +17,6 @@ repos:
     - id: ruff
       name: ruff
       require_serial: true
-      entry: ruff
+      entry: bash -c 'ruff "${@}"; git add -u'
       language: system
       types: [file, python]

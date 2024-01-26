@@ -11,8 +11,10 @@ ACCELERATOR = "gpu"
 
 # TODO: add config file
 # TODO: add data augmentation
-# TODO: add logger (tensorboard or aim?)
+# TODO: change samplin sequence to 100hz (now is 500hz?)
 # TODO: add checkpointing and result model save
+# TODO: visualize segmentation
+
 def load_last_checkpoint(checkpoint_dir: Path):
     pass
 
@@ -21,8 +23,8 @@ if __name__ == "__main__":
     ecg_dir = Path("data")
     n_channels = 1
     n_classes = 4 # - nothing, P, QRS, T
-    batch_size = 64
-    learning_rate = 1e-4
+    batch_size = 32
+    learning_rate = 1e-3
     num_of_workers = os.cpu_count()
 
     # Initialize ECG Data Module
@@ -33,5 +35,5 @@ if __name__ == "__main__":
     tensor_board_logger = TensorBoardLogger('./logs', name='ecg_p_qrs_t')
 
     model = ECGModel(n_channels=n_channels, n_classes=n_classes, learning_rate=learning_rate)
-    trainer = pl.Trainer(max_epochs=300, accelerator=ACCELERATOR, logger=tensor_board_logger)
+    trainer = pl.Trainer(max_epochs=100, accelerator=ACCELERATOR, logger=tensor_board_logger)
     trainer.fit(model, ecg_data_module)

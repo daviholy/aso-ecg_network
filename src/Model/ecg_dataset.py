@@ -9,9 +9,9 @@ class ECGDataset(Dataset):
         self.annotations = torch.as_tensor(annotations)
 
     def __len__(self) -> int:
-        return len(self.records) * 12 * 3
+        return len(self.records) * 12
 
     def __getitem__(self, idx) -> tuple[torch.Tensor, torch.Tensor]:
-        record = self.records[idx // (12 * 3), idx % 12]
-        annotation = self.annotations[idx // (12 * 3), idx % 12]
+        record = self.records[idx // 12, idx % 12]
+        annotation = self.annotations[idx // 12, idx % 12]
         return record, annotation

@@ -98,7 +98,7 @@ class ECGDataModule(LightningDataModule):
             match symbol:
                 case "(":
                     current_start = index
-                case "p" | "N" | "T":
+                case "p" | "N" | "t":
                     current_symbol = cast(str, symbol)
                     current_peak = index
                 case ")":

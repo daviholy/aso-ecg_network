@@ -1,33 +1,20 @@
 import os
-from typing import Optional, cast
+from typing import Optional
 from pathlib import Path
 import numpy as np
 
 import wfdb
+from wfdb.processing import resample_sig
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from wfdb import Annotation
-from dataclasses import dataclass
-from .ecg_dataset import ECGDataset
+
 import numpy.typing as npt
+from model.ecg_dataset import ECGDataset
+from common.utils import parse_annotations
+from common.data_classes import Range, AnnotationSymbols, leads
 
 RANDOM_STATE_SEED = 42
-
-
-@dataclass
-class Range:
-    start: int
-    peak: int
-    end: int
-
-
-@dataclass
-class AnnotationSymbols:
-    p: list[Range]
-    N: list[Range]
-    t: list[Range]
-
 
 
 class ECGDataModule(LightningDataModule):
@@ -37,14 +24,14 @@ class ECGDataModule(LightningDataModule):
         batch_size: int = 4,
         num_of_workers: int | None = os.cpu_count(),
         train_ratio: float = 0.8,
+        resample_fs: int = 100
     ) -> None:
         super().__init__()
         self.ecg_dir = ecg_dir
         self.batch_size = batch_size
         self.num_of_workers = num_of_workers if num_of_workers else 0
         self.train_ratio = train_ratio
-
-        self.leads = ["i", "ii", "iii", "avr", "avl", "avf", "v1", "v2", "v3", "v4", "v5", "v6"]
+        self.resample_fs = resample_fs
 
         self.train = None
         self.val = None
@@ -60,13 +47,14 @@ class ECGDataModule(LightningDataModule):
         for record_name in record_names:
             record_path = self.ecg_dir / record_name
             record = wfdb.rdrecord(record_path)
+            p_signals = np.array([resample_sig(record.p_signal[:, i], record.fs, self.resample_fs)[0] for i in range(record.p_signal.shape[1])])
             lead_annotations = []
-            for lead in self.leads:
+            for lead in leads:
                 annotation = wfdb.rdann(str(record_path), lead)
-                parsed_annotation = self._parse_annotations(annotation)
-                lead_annotations.append(self._generate_result(parsed_annotation, record.p_signal.shape[0]))
+                parsed_annotation = parse_annotations(annotation, self.resample_fs)
+                lead_annotations.append(self._generate_result(parsed_annotation, p_signals.shape[1]))
 
-            records.append(np.asarray(record.p_signal, dtype=np.float32).T)
+            records.append(np.asarray(p_signals, dtype=np.float32))
             annotations.append(lead_annotations)
 
         # Split the dataset into training, validation, and test sets
@@ -85,32 +73,6 @@ class ECGDataModule(LightningDataModule):
         self.val = ECGDataset(np.asarray(val_records), np.asarray(val_annotations))
         self.test = ECGDataset(np.asarray(test_records), np.asarray(test_annotations))
 
-    def _parse_annotations(self, annotation: Annotation) -> AnnotationSymbols:
-        if not annotation.symbol:
-            raise Exception("the file need to have symbols loaded")
-
-        current_start = None
-        current_peak = None
-        current_symbol = None
-        intervals = {"p": [], "N": [], "t": []}
-
-        for symbol, index in zip(annotation.symbol, annotation.sample):
-            match symbol:
-                case "(":
-                    current_start = index
-                case "p" | "N" | "t":
-                    current_symbol = cast(str, symbol)
-                    current_peak = index
-                case ")":
-                    if not (current_peak and isinstance(current_symbol, str)):
-                        raise Exception("need to have peak specified before end of the interval")
-                    if not current_start:
-                        if not len(intervals[current_symbol]) == 0:
-                            raise Exception("need to have start of the interval before parse end")
-                        current_start = 0
-                    intervals[current_symbol].append(Range(current_start, current_peak, index))
-
-        return AnnotationSymbols(**intervals)
 
     def _generate_result(self, symbols: AnnotationSymbols, length: int):
         def generate_signal(ranges: list[Range], result: npt.NDArray, class_num: int) -> np.ndarray:

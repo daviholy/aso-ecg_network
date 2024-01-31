@@ -29,15 +29,13 @@ class _ResidualBlock(nn.Module):
 class ECGNetwork(nn.Module):
     def __init__(self, input_channels: int, n_classes: int):
         super(ECGNetwork, self).__init__()
-        self.block1 = _ResidualBlock(input_channels, 16)
-        self.block2 = _ResidualBlock(16, 32)
-        self.block3 = _ResidualBlock(32, 64)
-        self.block4 = _ResidualBlock(64, 64)
-        self.final = nn.Conv1d(64, n_classes, kernel_size=1)
+        self.block1 = _ResidualBlock(input_channels, 8)
+        self.block2 = _ResidualBlock(8, 16)
+        self.block3 = _ResidualBlock(16, 32)
+        self.final = nn.Conv1d(32, n_classes, kernel_size=1)
 
     def forward(self, x):
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
-        x = self.block4(x)
         return self.final(x)

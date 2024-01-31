@@ -4,11 +4,12 @@ import torch.nn.functional as F
 from torch.optim import AdamW, Optimizer
 from torchmetrics.classification import MulticlassJaccardIndex
 from torchmetrics import Accuracy
+from pathlib import Path
 
 from .ecg_network import ECGNetwork
 
 class ECGModel(pl.LightningModule):
-    def __init__(self, n_classes: int, n_channels: int, learning_rate: float = 1e-4) -> None:
+    def __init__(self, n_classes: int, n_channels: int, learning_rate: float = 1e-4, model_path: Path = None) -> None:
         super().__init__()
         self.save_hyperparameters()
         self.model = ECGNetwork(n_channels, n_classes)
@@ -36,3 +37,9 @@ class ECGModel(pl.LightningModule):
         self.log("val_jaccard_index", jaccard_index, on_epoch=True, prog_bar=True)
         self.log("val_accuracy", acc, on_epoch=True, prog_bar=True)
         return loss
+    
+    def predict(self, input_data: torch.Tensor):
+        self.model.eval()
+        with torch.no_grad():
+            output = self.model(input_data)
+        return output

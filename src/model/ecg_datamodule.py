@@ -80,7 +80,7 @@ class ECGDataModule(LightningDataModule):
                 result[interval.start : interval.end] = class_num
             return result
 
-        sig = np.zeros(length,dtype=np.int64)
+        sig = np.zeros(length, dtype=np.int64)
         sig = generate_signal(symbols.p, sig, 1)
         sig = generate_signal(symbols.N, sig, 2)
         sig = generate_signal(symbols.t, sig, 3)

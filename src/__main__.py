@@ -14,7 +14,8 @@ ACCELERATOR = "gpu"
 
 # TODO: add config file
 # TODO: make separate file for visualization?
-# TODO: make test pipeline in datamodule in TensorBoard (cut start and end signal values as it is in training)
+# TODO: make test pipeline in datamodule in TensorBoard 
+# TODO: in all data cut start and end signal values because it is not annotated
 
 def plot_signal_with_labels(signal, labels):
     colors = {0: 'blue', 1: 'red', 2: 'green', 3: 'violet'}

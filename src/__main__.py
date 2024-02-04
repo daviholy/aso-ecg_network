@@ -57,13 +57,13 @@ def plot_signal_with_labels(signal, labels):
 
 if __name__ == "__main__":
     ##################################
-    train_model = False
+    train_model = True
     ##################################
     ecg_dir = Path("data")
     n_channels = 1
     n_classes = 4 # - nothing, P, QRS, T
     batch_size = 64
-    learning_rate = 1e-4
+    learning_rate = 4e-4
     num_of_workers = os.cpu_count()
     resample_fs = 100
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         trainer.fit(model, ecg_data_module)
     else:
         # FIXME: separate file
-        model = ECGModel.load_from_checkpoint(Path("./logs/ecg_p_qrs_t/version_23/checkpoints/epoch=199-step=6000.ckpt"))
+        model = ECGModel.load_from_checkpoint(Path("./logs/ecg_p_qrs_t/best_model/checkpoints/epoch=199-step=6000.ckpt"))
         model.to("cpu")
         ecg_data_module.setup()
         signal, target = ecg_data_module.test[1]

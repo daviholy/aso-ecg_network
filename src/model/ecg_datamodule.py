@@ -1,17 +1,17 @@
 import os
-from typing import Optional
+from typing import Optional, cast
 from pathlib import Path
 import numpy as np
 
 import wfdb
-from wfdb.processing import resample_sig
+from wfdb import Annotation
+from wfdb.processing import resample_sig, resample_ann
 from pytorch_lightning import LightningDataModule
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 import numpy.typing as npt
 from model.ecg_dataset import ECGDataset
-from common.utils import parse_annotations
 from common.data_classes import Range, AnnotationSymbols, leads
 
 RANDOM_STATE_SEED = 42
@@ -49,10 +49,24 @@ class ECGDataModule(LightningDataModule):
             record = wfdb.rdrecord(record_path)
             p_signals = np.array([resample_sig(record.p_signal[:, i], record.fs, self.resample_fs)[0] for i in range(record.p_signal.shape[1])])
             lead_annotations = []
-            for lead in leads:
+            for lead_idx, lead in enumerate(leads):
                 annotation = wfdb.rdann(str(record_path), lead)
-                parsed_annotation = parse_annotations(annotation, self.resample_fs)
+                parsed_annotation = self.parse_annotations(annotation, self.resample_fs)
+
+                first_annot_idx = parsed_annotation.get_min_start_idx()
+                last_annot_idx = parsed_annotation.get_max_end_idx()
+
+                start_cut_off, end_cut_off = int(first_annot_idx * 0.8), int(1.2 * last_annot_idx)
+                
+                mean_val = np.mean(p_signals[lead_idx])
+                std_dev = 0.05
+
+                p_signals[lead_idx, :start_cut_off] = np.random.normal(mean_val, std_dev, start_cut_off)
+                p_signals[lead_idx, end_cut_off + 1:] = np.random.normal(mean_val, std_dev, max(0, len(p_signals[lead_idx]) - end_cut_off - 1))
+
                 lead_annotations.append(self._generate_result(parsed_annotation, p_signals.shape[1]))
+
+
 
             records.append(np.asarray(p_signals, dtype=np.float32))
             annotations.append(lead_annotations)
@@ -85,6 +99,33 @@ class ECGDataModule(LightningDataModule):
         sig = generate_signal(symbols.N, sig, 2)
         sig = generate_signal(symbols.t, sig, 3)
         return sig
+    
+    def parse_annotations(self, annotation: Annotation, resample_fs: int = 100) -> AnnotationSymbols:
+        if not annotation.symbol:
+            raise Exception("the file need to have symbols loaded")
+
+        current_start = None
+        current_peak = None
+        current_symbol = None
+        intervals = {"p": [], "N": [], "t": []}
+
+        for symbol, index in zip(annotation.symbol, resample_ann(annotation.sample, annotation.fs, fs_target=resample_fs)):
+            match symbol:
+                case "(":
+                    current_start = index
+                case "p" | "N" | "t":
+                    current_symbol = cast(str, symbol)
+                    current_peak = index
+                case ")":
+                    if not (current_peak and isinstance(current_symbol, str)):
+                        raise Exception("need to have peak specified before end of the interval")
+                    if not current_start:
+                        if not len(intervals[current_symbol]) == 0:
+                            raise Exception("need to have start of the interval before parse end")
+                        current_start = 0
+                    intervals[current_symbol].append(Range(current_start, current_peak, index))
+
+        return AnnotationSymbols(**intervals)
 
     def train_dataloader(self) -> DataLoader:
         if not self.train:

@@ -1,0 +1,16 @@
+model:
+  n_channels: 1
+  n_classes: 4
+  learning_rate: 0.001 # 0.0004
+  train: False
+
+dataloader:
+  ecg_dir: "data"
+  batch_size: 64
+  num_workers: 4
+  train_ratio: 0.8
+  resample_fs: 100
+
+training:
+  accelerator: "cuda"
+  max_epochs: 200

@@ -56,8 +56,11 @@ class ECGDataModule(LightningDataModule):
                 first_annot_idx = parsed_annotation.get_min_start_idx()
                 last_annot_idx = parsed_annotation.get_max_end_idx()
 
-                start_cut_off, end_cut_off = int(first_annot_idx * 0.8), int(1.2 * last_annot_idx)
-                
+                threshold_annot_shift = int(0.02 * len(p_signals[lead_idx]))
+
+                start_cut_off = max(0, first_annot_idx - threshold_annot_shift)
+                end_cut_off = min(len(p_signals[lead_idx]) - 1, last_annot_idx + threshold_annot_shift)
+
                 mean_val = np.mean(p_signals[lead_idx])
                 std_dev = 0.05
 
@@ -65,8 +68,6 @@ class ECGDataModule(LightningDataModule):
                 p_signals[lead_idx, end_cut_off + 1:] = np.random.normal(mean_val, std_dev, max(0, len(p_signals[lead_idx]) - end_cut_off - 1))
 
                 lead_annotations.append(self._generate_result(parsed_annotation, p_signals.shape[1]))
-
-
 
             records.append(np.asarray(p_signals, dtype=np.float32))
             annotations.append(lead_annotations)

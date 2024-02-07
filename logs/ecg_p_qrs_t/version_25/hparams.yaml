@@ -1,0 +1,4 @@
+learning_rate: 0.0004
+model_path: null
+n_channels: 1
+n_classes: 4

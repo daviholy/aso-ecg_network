@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-import torch
 from wfdb.processing import resample_sig
 
 import pytorch_lightning as pl
@@ -14,11 +12,6 @@ from common.config import load_config
 from common.utils import plot_signal_with_labels_and_predictions
 
 import pydicom
-
-# TODO: add config file
-# TODO: make separate file for visualization?
-# TODO: make test pipeline in datamodule in TensorBoard 
-# TODO: in all data cut start and end signal values because it is not annotated
 
 if __name__ == "__main__":
     config = load_config("./src/config.yaml")
@@ -67,5 +60,3 @@ if __name__ == "__main__":
 
         pred = model_inference.perform_inference(signal)
         model_inference.display_prediction(signal=signal, pred=pred, target=target)
-
-

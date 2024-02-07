@@ -20,6 +20,7 @@ torchvision = {"version"= "*", source="torch"}
 pydicom = "*"
 wfdb = "*"
 scikit-learn = "*"
+pydantic = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "*"
